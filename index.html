@@ -1,0 +1,98 @@
+ <!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Campus Bites</title>
+
+    <link rel="stylesheet" href="style.css" />
+
+    <script defer src="./script.js"></script>
+  </head>
+
+  <body>
+
+    <header>
+      <h1>Campus Bites</h1>
+
+      <div class="cart">
+        🛒 Cart (<span class="cart-count">0</span>)
+      </div>
+    </header>
+
+
+    <main>
+
+      <!-- PRODUCTS -->
+      <section>
+
+        <h2>Our Snacks</h2>
+
+        <div class="products">
+
+          <div class="product">
+            <h3>Chicken Pie</h3>
+            <p>GH₵1500</p>
+            <button>Add to Cart</button>
+          </div>
+
+
+          <div class="product">
+            <h3>Sausage Roll</h3>
+            <p>GH₵800</p>
+            <button>Add to Cart</button>
+          </div>
+
+
+          <div class="product">
+            <h3>Doughnut</h3>
+            <p>GH₵500</p>
+            <button>Add to Cart</button>
+          </div>
+
+
+          <div class="product">
+            <h3>Soft Drink</h3>
+            <p>GH₵700</p>
+            <button>Add to Cart</button>
+          </div>
+
+        </div>
+
+      </section>
+
+
+      <!-- CART -->
+      <section class="cart-section">
+
+        <h2>Your Cart</h2>
+
+        <h5 class="empty-cart-message">
+          Your cart is empty.
+        </h5>
+
+        <ul class="cart-items">
+          <!-- Cart items will be dynamically added here -->
+        </ul>
+
+
+        <div class="cart-total">
+
+          <p>
+            Total:
+            GH₵<span class="total-amount">0</span>
+          </p>
+
+          <button id="checkout">
+            Checkout
+          </button>
+
+        </div>
+
+      </section>
+
+    </main>
+
+  </body>
+</html>
