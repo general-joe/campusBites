@@ -1,630 +1,388 @@
 // -----------------------------------
-// GET ELEMENTS FROM HTML
+// 1. GET ELEMENTS FROM HTML
 // -----------------------------------
 
 const products = document.querySelectorAll(".product");
-
 const cartItems = document.querySelector(".cart-items");
-
 const cartCount = document.querySelector(".cart-count");
-
 const totalAmount = document.querySelector(".total-amount");
-
 const emptyCartMessage = document.querySelector(".empty-cart-message");
-
 const checkoutButton = document.querySelector("#checkout");
 
 // -----------------------------------
-// CART STORAGE KEY
+// 2. CART STORAGE
 // -----------------------------------
-
-// This is the name we will use
-// when storing the cart in localStorage.
 
 const CART_STORAGE_KEY = "campusBitesCart";
 
-// -----------------------------------
-// LOAD CART FROM LOCAL STORAGE
-// -----------------------------------
-
-// Try to get the saved cart from the browser.
-
 const savedCart = localStorage.getItem(CART_STORAGE_KEY);
-
-// If there is a saved cart,
-// convert it from JSON back into an array.
-//
-// If there is no saved cart,
-// start with an empty array.
 
 let cart = savedCart ? JSON.parse(savedCart) : [];
 
-// -----------------------------------
-// SAVE CART
-// -----------------------------------
-
+// Save the cart to localStorage.
 function saveCart() {
-  // localStorage can only store strings.
-
-  // JSON.stringify() converts our
-  // JavaScript array into a string.
-
   localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
 }
 
 // -----------------------------------
-// 1. ADD PRODUCTS TO CART
+// 3. GET PRODUCT INFORMATION
 // -----------------------------------
 
-products.forEach((product) => {
-  const button = product.querySelector("button");
+function getProductDetails(product) {
+  const name = product.querySelector("h3").textContent.trim();
+  const priceText = product.querySelector("p").textContent;
+  const price = Number(priceText.replace("GH₵", "").trim());
 
-  button.addEventListener("click", () => {
-    // Get product name
+  return { name, price };
+}
 
-    const name = product.querySelector("h3").textContent;
+// -----------------------------------
+// 4. ADD PRODUCTS TO CART
+// -----------------------------------
 
-    // Get product price as text
+function addToCart(product) {
+  const { name, price } = getProductDetails(product);
 
-    const priceText = product.querySelector("p").textContent;
+  const existingProduct = cart.find((item) => item.name === name);
 
-    // Convert price from text to number
+  if (existingProduct) {
+    existingProduct.quantity++;
+  } else {
+    cart.push({
+      name,
+      price,
+      quantity: 1,
+    });
+  }
 
-    const price = Number(priceText.replace("GH₵", "").trim());
+  saveCart();
+  renderCart();
+}
 
-    // Check whether this product
-    // already exists in the cart.
+// Attach click events to the product buttons.
+function setupProductButtons() {
+  products.forEach((product) => {
+    const button = product.querySelector("button");
 
-    const existingProduct = cart.find((item) => item.name === name);
-
-    if (existingProduct) {
-      // Product already exists.
-
-      // Increase its quantity.
-
-      existingProduct.quantity++;
-    } else {
-      // Product does not exist.
-
-      // Add it to the cart.
-
-      cart.push({
-        name: name,
-
-        price: price,
-
-        quantity: 1,
-      });
-    }
-
-    // Save the updated cart
-    // to the browser.
-
-    saveCart();
-
-    // Update the screen.
-
-    renderCart();
+    button.addEventListener("click", () => {
+      addToCart(product);
+    });
   });
-});
+}
 
 // -----------------------------------
-// 2. DISPLAY THE CART
+// 5. INCREASE PRODUCT QUANTITY
+// -----------------------------------
+
+function increaseQuantity(productName) {
+  const item = cart.find((item) => item.name === productName);
+
+  if (!item) return;
+
+  item.quantity++;
+
+  saveCart();
+  renderCart();
+}
+
+// -----------------------------------
+// 6. DECREASE PRODUCT QUANTITY
+// -----------------------------------
+
+function decreaseQuantity(productName) {
+  const item = cart.find((item) => item.name === productName);
+
+  if (!item) return;
+
+  item.quantity--;
+
+  if (item.quantity <= 0) {
+    removeFromCart(productName);
+    return;
+  }
+
+  saveCart();
+  renderCart();
+}
+
+// -----------------------------------
+// 7. REMOVE PRODUCT FROM CART
+// -----------------------------------
+
+function removeFromCart(productName) {
+  cart = cart.filter((item) => item.name !== productName);
+
+  saveCart();
+  renderCart();
+}
+
+// -----------------------------------
+// 8. DISPLAY THE CART
 // -----------------------------------
 
 function renderCart() {
-  // Remove the old cart items
-  // from the screen.
-
   cartItems.innerHTML = "";
 
-  // Check whether cart is empty.
+  emptyCartMessage.style.display = cart.length === 0 ? "block" : "none";
 
-  if (cart.length === 0) {
-    emptyCartMessage.style.display = "block";
-  } else {
-    emptyCartMessage.style.display = "none";
-  }
-
-  // Go through every item in the cart.
-
-  cart.forEach((item, index) => {
-    // Create <li>
-
+  cart.forEach((item) => {
     const cartItem = document.createElement("li");
-
     cartItem.classList.add("cart-item");
-
-    // -----------------------------------
-    // PRODUCT INFORMATION
-    // -----------------------------------
 
     const productInfo = document.createElement("div");
 
-    productInfo.innerHTML = `
+    const productName = document.createElement("strong");
+    productName.textContent = item.name;
 
-      <strong>${item.name}</strong>
+    const productPrice = document.createElement("p");
+    productPrice.textContent = `GH₵${item.price.toFixed(2)}`;
 
-      <p>GH₵${item.price}</p>
-
-    `;
-
-    // -----------------------------------
-    // QUANTITY CONTAINER
-    // -----------------------------------
+    productInfo.append(productName, productPrice);
 
     const quantityContainer = document.createElement("div");
-
     quantityContainer.classList.add("quantity");
 
-    // -----------------------------------
-    // DECREASE BUTTON
-    // -----------------------------------
-
     const decreaseButton = document.createElement("button");
-
     decreaseButton.textContent = "-";
-
-    // -----------------------------------
-    // QUANTITY TEXT
-    // -----------------------------------
+    decreaseButton.setAttribute("aria-label", `Decrease ${item.name} quantity`);
 
     const quantityText = document.createElement("span");
-
     quantityText.textContent = item.quantity;
 
-    // -----------------------------------
-    // INCREASE BUTTON
-    // -----------------------------------
-
     const increaseButton = document.createElement("button");
-
     increaseButton.textContent = "+";
-
-    // -----------------------------------
-    // REMOVE BUTTON
-    // -----------------------------------
+    increaseButton.setAttribute("aria-label", `Increase ${item.name} quantity`);
 
     const removeButton = document.createElement("button");
-
     removeButton.textContent = "Remove";
 
-    // -----------------------------------
-    // PUT QUANTITY CONTROLS TOGETHER
-    // -----------------------------------
+    quantityContainer.append(
+      decreaseButton,
+      quantityText,
+      increaseButton,
+      removeButton,
+    );
 
-    quantityContainer.appendChild(decreaseButton);
-
-    quantityContainer.appendChild(quantityText);
-
-    quantityContainer.appendChild(increaseButton);
-
-    quantityContainer.appendChild(removeButton);
-
-    // -----------------------------------
-    // PUT EVERYTHING INSIDE CART ITEM
-    // -----------------------------------
-
-    cartItem.appendChild(productInfo);
-
-    cartItem.appendChild(quantityContainer);
-
-    // -----------------------------------
-    // PUT CART ITEM INSIDE <UL>
-    // -----------------------------------
-
+    cartItem.append(productInfo, quantityContainer);
     cartItems.appendChild(cartItem);
 
-    // -----------------------------------
-    // DECREASE QUANTITY
-    // -----------------------------------
-
+    // Connect each button to its own function.
     decreaseButton.addEventListener("click", () => {
-      item.quantity--;
-
-      // If quantity becomes zero,
-      // remove the product.
-
-      if (item.quantity === 0) {
-        cart.splice(index, 1);
-      }
-
-      // Save the new cart.
-
-      saveCart();
-
-      // Update the screen.
-
-      renderCart();
+      decreaseQuantity(item.name);
     });
-
-    // -----------------------------------
-    // INCREASE QUANTITY
-    // -----------------------------------
 
     increaseButton.addEventListener("click", () => {
-      item.quantity++;
-
-      // Save the new cart.
-
-      saveCart();
-
-      // Update the screen.
-
-      renderCart();
+      increaseQuantity(item.name);
     });
 
-    // -----------------------------------
-    // REMOVE PRODUCT
-    // -----------------------------------
-
     removeButton.addEventListener("click", () => {
-      cart.splice(index, 1);
-
-      // Save the new cart.
-
-      saveCart();
-
-      // Update the screen.
-
-      renderCart();
+      removeFromCart(item.name);
     });
   });
 
-  // Update total price.
-
   calculateTotal();
-
-  // Update cart count.
-
   updateCartCount();
 }
 
 // -----------------------------------
-// 3. CALCULATE TOTAL
+// 9. CALCULATE TOTAL PRICE
 // -----------------------------------
 
 function calculateTotal() {
-  let total = 0;
-
-  cart.forEach((item) => {
-    total += item.price * item.quantity;
-  });
+  const total = cart.reduce((sum, item) => {
+    return sum + item.price * item.quantity;
+  }, 0);
 
   totalAmount.textContent = total.toFixed(2);
 }
 
 // -----------------------------------
-// 4. UPDATE CART COUNT
+// 10. UPDATE CART COUNT
 // -----------------------------------
 
 function updateCartCount() {
-  let count = 0;
-
-  cart.forEach((item) => {
-    count += item.quantity;
-  });
+  const count = cart.reduce((sum, item) => {
+    return sum + item.quantity;
+  }, 0);
 
   cartCount.textContent = count;
 }
 
 // -----------------------------------
-// 5. CREATE RECEIPT
+// 11. CREATE AND PRINT RECEIPT
 // -----------------------------------
 
 function printReceipt() {
-  // Calculate total.
-
   const total = cart.reduce((sum, item) => {
     return sum + item.price * item.quantity;
   }, 0);
 
-  // Get current date and time.
-
   const date = new Date();
-
   const formattedDate = date.toLocaleDateString("en-GH");
-
   const formattedTime = date.toLocaleTimeString("en-GH");
 
-  // This variable will hold
-  // all the rows of the receipt.
-
   let receiptItems = "";
-
-  // Create one row for each
-  // product in the cart.
 
   cart.forEach((item) => {
     const subtotal = item.price * item.quantity;
 
     receiptItems += `
-
       <tr>
-
         <td>${item.name}</td>
-
         <td>${item.quantity}</td>
-
         <td>GH₵${item.price.toFixed(2)}</td>
-
         <td>GH₵${subtotal.toFixed(2)}</td>
-
       </tr>
-
     `;
   });
 
-  // Open a new browser window.
-
   const receiptWindow = window.open("", "_blank", "width=700,height=800");
-
-  // Check whether browser
-  // blocked the popup.
 
   if (!receiptWindow) {
     alert("Please allow pop-ups to print the receipt.");
-
     return;
   }
 
-  // Put the receipt HTML
-  // inside the new window.
-
   receiptWindow.document.write(`
-
     <!doctype html>
-
-    <html>
-
+    <html lang="en">
       <head>
-
-        <title>
-          Campus Bites Receipt
-        </title>
-
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Campus Bites Receipt</title>
 
         <style>
-
           body {
-
             font-family: Arial, sans-serif;
-
             max-width: 700px;
-
             margin: 40px auto;
-
             padding: 20px;
-
             color: #222;
-
           }
-
 
           .receipt-header {
-
             text-align: center;
-
             margin-bottom: 30px;
-
           }
-
 
           .receipt-header h1 {
-
             margin-bottom: 5px;
-
           }
-
 
           .receipt-header p {
-
             margin: 4px 0;
-
           }
-
 
           table {
-
             width: 100%;
-
             border-collapse: collapse;
-
             margin-top: 25px;
-
           }
 
-
-          th,
-          td {
-
+          th, td {
             border-bottom: 1px solid #ddd;
-
             padding: 12px 8px;
-
             text-align: left;
-
           }
-
 
           th {
-
             background: #f5f5f5;
-
           }
-
 
           .total {
-
             text-align: right;
-
             font-size: 22px;
-
             font-weight: bold;
-
             margin-top: 25px;
-
           }
-
 
           .thank-you {
-
             text-align: center;
-
             margin-top: 40px;
-
           }
-
 
           @media print {
-
             body {
-
               margin: 0;
-
             }
-
           }
-
         </style>
-
       </head>
 
-
       <body>
-
-
         <div class="receipt-header">
-
           <h1>Campus Bites</h1>
-
           <h2>Sales Receipt</h2>
-
-          <p>
-            Date: ${formattedDate}
-          </p>
-
-          <p>
-            Time: ${formattedTime}
-          </p>
-
+          <p>Date: ${formattedDate}</p>
+          <p>Time: ${formattedTime}</p>
         </div>
-
 
         <table>
-
           <thead>
-
             <tr>
-
               <th>Product</th>
-
               <th>Qty</th>
-
               <th>Price</th>
-
               <th>Subtotal</th>
-
             </tr>
-
           </thead>
 
-
           <tbody>
-
             ${receiptItems}
-
           </tbody>
-
         </table>
 
-
         <div class="total">
-
-          Total:
-          GH₵${total.toFixed(2)}
-
+          Total: GH₵${total.toFixed(2)}
         </div>
-
 
         <div class="thank-you">
-
-          <p>
-            Thank you for shopping
-            with Campus Bites!
-          </p>
-
-          <p>
-            Please come again.
-          </p>
-
+          <p>Thank you for shopping with Campus Bites!</p>
+          <p>Please come again.</p>
         </div>
-
-
       </body>
-
     </html>
-
   `);
-
-  // Finish writing to the new window.
 
   receiptWindow.document.close();
 
-  // Print after the receipt
-  // has loaded.
-
-  receiptWindow.onload = () => {
-    receiptWindow.focus();
-
-    receiptWindow.print();
-  };
-
-  // When the customer finishes
-  // with the print dialog,
-  // clear the cart.
-
+  // Clear the cart only after the customer
+  // finishes printing or closes the print dialog.
   receiptWindow.onafterprint = () => {
     cart = [];
-
     saveCart();
-
     renderCart();
-
     receiptWindow.close();
+  };
+
+  // Wait until the receipt is ready before printing.
+  receiptWindow.onload = () => {
+    receiptWindow.focus();
+    receiptWindow.print();
   };
 }
 
 // -----------------------------------
-// 6. CHECKOUT
+// 12. CHECKOUT
 // -----------------------------------
 
-checkoutButton.addEventListener("click", () => {
-  // Don't allow checkout
-  // when cart is empty.
-
+function handleCheckout() {
   if (cart.length === 0) {
     alert("Your cart is empty.");
-
     return;
   }
 
-  // Generate and print receipt.
-
   printReceipt();
-});
+}
+
+checkoutButton.addEventListener("click", handleCheckout);
 
 // -----------------------------------
-// 7. LOAD CART WHEN PAGE OPENS
+// 13. INITIALIZE THE CART
 // -----------------------------------
 
-// This is very important.
-//
-// When the page is refreshed,
-// cart was loaded from localStorage
-// near the beginning of this file.
-//
-// renderCart() puts that saved
-// cart back onto the screen.
+// Attach product button events.
+setupProductButtons();
 
+// Restore the saved cart on the screen.
 renderCart();
